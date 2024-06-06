@@ -1,8 +1,8 @@
 # Seq2Seq
 
 ## Resources
-- [ ] [Sequence to Sequence Learning with Neural Networks](https://github.com/bentrevett/pytorch-seq2seq)
-- [ ] [CS224N Lecture 7](https://www.youtube.com/watch?v=wzfWHP6SXxY&list=PLoROMvodv4rOSH4v6133s9LFPRHjEmbmJ&index=8&t=13s)
+- [x] [Sequence to Sequence Learning with Neural Networks](https://github.com/bentrevett/pytorch-seq2seq)
+- [x] [CS224N Lecture 7](https://www.youtube.com/watch?v=wzfWHP6SXxY&list=PLoROMvodv4rOSH4v6133s9LFPRHjEmbmJ&index=8&t=13s)
 
 ## Notes:
 

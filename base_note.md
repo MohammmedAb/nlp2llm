@@ -8,6 +8,7 @@
 - [Bulid LLM Form Scratch Book](https://www.manning.com/books/build-a-large-language-model-from-scratch/)
 - [Annotated Research Paper Implementations](https://nn.labml.ai/)
 - [Torchtune](https://pytorch.org/torchtune/main/index.html)
+- [LLM Course](https://github.com/mlabonne/llm-course)
 
 ## Concepts to Learn
 ### Chapter1: Basics of NLP
@@ -19,25 +20,28 @@
 4. [x] [Pytorch](Chapter2/pytorch.md)
 5. [x] [Regularization & Activation Functions](Chapter2/regularization.md)
 
-6. [ ] [Make a Excalidraw file to dhow the pipeline of a Pytorch project and connect everything in this chapter](https://excalidraw.com/)
+6. [x] [Make a Excalidraw file to dhow the pipeline of a Pytorch project and connect everything in this chapter](https://excalidraw.com/)
     - 
 
 ### Cahpter 3: Convolutional Layers & CNNs
-7. [ ] [Convolutional](Chapter3/convolutional.md)
+7. [x] [Convolutional](Chapter3/convolutional.md)
 
 ### Chapter4: Recurrent Neural Networks & LSTMs
-7. [ ] [Recurrent Neural Networks](Chapter4/rnn.md)
+7. [x] [Recurrent Neural Networks](Chapter4/rnn.md)
 
-<!-- 5. [ ] [Recurrent Neural Networks](Chapter2/rnn.md) -->
-#### Cahpter Project:
--  [Blog Post](NN_blog_post/nn_blog_post.md)
-
-### Chapter5: Seq2Seq and Transformers
-6. [ ] [Sequence to Sequence Models & Machine Translation](Chapter5/seq2seq.md)
-7. [ ] [LLM and Transformers](Chapter5/llm_transformers.md)
+### Chapter5: Seq2Seq, Attention and Transformers
+6. [x] [Sequence to Sequence Models & Machine Translation](Chapter5/seq2seq.md)
+7. [ ] [Attention Mechanism](Chapter5/attention.md)
+### Chapter6:  Transformers
+7. [ ] [Transformers](Chapter6/transformers.md)
 #### Cahpter Project:
 
-### Chapter6: Advanced Topics in LLMs
+### Chapter7:  Large Language Models
+8. [ ] [Large Language Models](Chapter7/llm.md)
+    - Source: [LLM Course](https://github.com/mlabonne/llm-course)
+    - Source: [LLM Traning](https://rentry.org/llm-training)
+
+### Chapter99: Advanced Topics in LLMs
 8. [ ] [Pretraining](Chapter4/pretraining.md)
 9. [ ] [Post-training](Chapter4/posttraining.md)
     - [ ] Model Alignment (RLHF llm)
