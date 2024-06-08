@@ -1,4 +1,4 @@
-# Transformers | Self-Attention
+# Self-Attention | Transformers 
 
 ## Resources
 - [ ] [CS224N Leacture 9](https://youtu.be/ptuGllU5SQQ?si=T6p8hBwC88o9IJyd)
@@ -17,6 +17,8 @@
 #### Lack of Parallelization:
 - Forward and backward passes have `O(sequece_length)` unparallelizable operations.
 - Future RNN hidden states can't be computed in full before past RNN hidden states are computed.
+
+## Attention-Based NLP Models
 
 ### Self-Attention
 IMPORTANT: Attention operates on **Queries $q_T$**, **Keys $k_T$**, and **Values $v_T$**. 
@@ -58,3 +60,24 @@ $$ = W_2 * \text{ReLU}(W_1 \times output_i + b_1) + b_2$$
 - $b_1, b_2$ are the bias vectors
 
 ### Ensure the model don't look at the future: (Masking)
+> We use masking to prevent the model from looking at the future tokens.
+- we maske the future in the decoder
+- We mask out attention scores to future words by setting the attention scores to $-\infty$
+$$ e_{ij} = \begin{cases} q_i^T k_j, & j < i \\ -\infty, & j \geq i  \end{cases} $$
+
+if the key index is less than the query index, we keep the attention score, otherwise, we set it to $-\infty$. this insures that the model doesn't look at the future tokens.
+
+## Transformer Model
+There are more elements we need to make a transformer model:
+- **key-query-value attention:** How do we get the $k, q, v$ vectors from a single word embedding?
+- **Multi-head attention**
+- **Triks to help with training:** Layer normalization, residual connections, Scaling the dot product.
+
+### Key-Query-Value Attention
+> Key and query Matrices turn the input embeddings into one that is more suitable for calculating similarity.
+Values matrix are the embeddings that we will return as the output of the attention mechanism.
+
+#### How key-query-value attention is computed?
+I don't understand this part yet. 
+
+### Multi-Head Attention
