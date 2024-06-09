@@ -1,7 +1,7 @@
 # Self-Attention | Transformers 
 
 ## Resources
-- [ ] [CS224N Leacture 9](https://youtu.be/ptuGllU5SQQ?si=T6p8hBwC88o9IJyd)
+- [x] [CS224N Leacture 9](https://youtu.be/ptuGllU5SQQ?si=T6p8hBwC88o9IJyd)
 - [ ] Attention is All You Need Paper
 - [ ] [Karpathy GPT from scratch](https://youtu.be/kCc8FmEb1nY?si=7uIevkmpFFykpEPP)
 
@@ -80,4 +80,30 @@ Values matrix are the embeddings that we will return as the output of the attent
 #### How key-query-value attention is computed?
 I don't understand this part yet. 
 
-### Multi-Head Attention
+### Multi-Headed Attention
+**Intuition:** for word i, Self attention looks or foucs where ${x_i}^T Q^T K x_j$ is high. but mabye we want to focus on different words for different reasons.
+- We'll define multiple attention "heads" that will allow the model to focus on different parts of the sequence through multiple Q,K,V matrices.
+- let $ Q_\ell, K_\ell, V_\ell \in \mathbb{R}^{d \times \frac{d}{h}}$ where $h$ is the number of heads and $\ell$ ranges from 1 to $h$.
+- Each attention head will performs attention independently
+    - $ \text{output}_\ell = \text{softmax}(XQ_\ell K_\ell^T X^T) * X V_\ell$
+- Then we concatenate the outputs of the attention heads and multiply by a weight matrix $ \text{outout} = Y[output_1; ,,, ; output_h], \text{where } Y \in \mathbb{R}^{d \times d}$
+
+### Tricks to help with training
+#### Residual Connections (Skip Connections)
+> Trick to help with training deep networks by allowing the gradients to flow through the network more easily.
+- In a typical neural network layer, the input 𝑥 is transformed by a series of operations: $y = F(x)$
+- In a residual block, the input 𝑥 is added to the output of the block: $y = F(x) + x$
+- This helps with the vanishing gradient problem.
+- In the transformer, we add a residual connection around each sub-layer, followed by layer normalization.
+
+#### Layer Normalization
+Intuition: there's a lot of variance in the values of the hidden states, which can make training difficult.
+> Layer normalization normalizes the values of the hidden states across the feature dimension.
+- It help with the vanishing gradient problem.
+
+#### Scaling the Dot Product
+The problem with the dot product is that the dot product grows with the **dimension of the vectors.** Because of this, inputs to the softmax function can become very large, making the **gradients very small.**
+- To prevent this, we divide the attention scores by $\sqrt{d/h}$, where $d$ is the dimension of the model and $h$ is the number of heads.
+
+> 
+
