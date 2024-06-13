@@ -33,13 +33,10 @@
 6. [x] [Sequence to Sequence Models & Machine Translation](Chapter5/seq2seq.md)
 7. [x] [Attention Mechanism](Chapter5/attention.md)
 ### Chapter6:  Transformers
-8. [ ] [Transformers](Chapter6/transformers.md)
-#### Cahpter Project:
+8. [x] [Transformers](Chapter6/transformers.md)
 
 ### Chapter7:  Large Language Models
 9. [ ] [Large Language Models](Chapter7/llm.md)
-    - Source: [LLM Course](https://github.com/mlabonne/llm-course)
-    - Source: [LLM Traning](https://rentry.org/llm-training)
 
 ### Chapter99: Advanced Topics in LLMs
 8. [ ] [Pretraining](Chapter4/pretraining.md)

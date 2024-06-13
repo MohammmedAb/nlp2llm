@@ -2,8 +2,8 @@
 
 ## Resources
 - [x] [CS224N Leacture 9](https://youtu.be/ptuGllU5SQQ?si=T6p8hBwC88o9IJyd)
-- [ ] Attention is All You Need Paper
-- [ ] [Karpathy GPT from scratch](https://youtu.be/kCc8FmEb1nY?si=7uIevkmpFFykpEPP)
+- [x] Attention is All You Need Paper
+- [x] [Karpathy GPT from scratch](https://youtu.be/kCc8FmEb1nY?si=7uIevkmpFFykpEPP)
 
 - [ ] [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/)
 
@@ -26,7 +26,17 @@ IMPORTANT: Attention operates on **Queries $q_T$**, **Keys $k_T$**, and **Values
 - The (dot product version) slef-attention operation is as follows:
 $$e_{ij} = q_i^T k_j$$
     - We transposed the query vector $q_i$ to make the dot product possible: The dot product requires one vector to be a row vector and the other to be a column vector
-- The attention scores are then normalized using the softmax function 
+- The attention scores are then normalized using the softmax function
+
+#### Self-Attention in Detail
+1. Create three vectors from each word embedding: **Query, Key, and Value**
+2. We create these vectors by multiplying the input (embedding) by three weight matrices: $W^Q, W^K, W^V$, (We can represent these matrices as a linear layers)
+3. We then compute the **attention scores** of each word with every other word in the sequence **using the dot product of the query and key vectors**.
+    - The attention score between word $i$ and word $j$ is the dot product of the **query vector of word $i$** and the **key vector of word $j$.**
+4. We then normalize the attention scores using the softmax function to get the **attention distribution** (Softmax normalizes the scores so they’re all positive and add up to 1).
+5. **Multiplying value vectors by softmax scores**: For each word, we multiply its corresponding value vector by the softmax score. This multiplication has the following effects:
+    - If a word is highly relevant or important to the current word being processed, it will have a high softmax score (close to 1).
+    - If a word is less relevant or irrelevant to the current word, it will have a low softmax score (close to 0). 
 
 #### What's the difference between self-attention and full connected layers?
 ![](https://pbs.twimg.com/media/Fp6DofVXsAERpA8?format=jpg&name=small)
@@ -82,7 +92,7 @@ I don't understand this part yet.
 
 ### Multi-Headed Attention
 **Intuition:** for word i, Self attention looks or foucs where ${x_i}^T Q^T K x_j$ is high. but mabye we want to focus on different words for different reasons.
-- We'll define multiple attention "heads" that will allow the model to focus on different parts of the sequence through multiple Q,K,V matrices.
+- We'll define multiple attention "heads" that will **allow the model to focus on different parts of the sequence through multiple Q,K,V matrices.**
 - let $ Q_\ell, K_\ell, V_\ell \in \mathbb{R}^{d \times \frac{d}{h}}$ where $h$ is the number of heads and $\ell$ ranges from 1 to $h$.
 - Each attention head will performs attention independently
     - $ \text{output}_\ell = \text{softmax}(XQ_\ell K_\ell^T X^T) * X V_\ell$
