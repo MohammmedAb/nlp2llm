@@ -38,7 +38,7 @@ class MLP(nn.Module):
     def __init__(self, config):    
         super().__init__()
         self.c_fc = nn.Linear(config.n_embd, 4*config.n_embd) # fully connected layer
-        self.gelu = nn.GELU(approximation='tanh') # activation function
+        self.gelu = nn.GELU(approximate='tanh') # activation function
         self.c_proj = nn.Linear(4*config.n_embd, config.n_embd) # fully connected layer
     def forward(self, x):
         x = self.c_fc(x)
@@ -50,6 +50,7 @@ class MLP(nn.Module):
 class Block(nn.Module):
 
     def __init__(self, config):
+        super().__init__()
         self.ln_1 = nn.LayerNorm(config.n_embd) # layernorm 1
         self.attn = CasualSelfAttention(config) # multi-head self-attention
         self.ln_2 = nn.LayerNorm(config.n_embd)
@@ -65,11 +66,11 @@ class Block(nn.Module):
 class GPTConfig:
     block_size: int= 1024
     vocab_size: int = 50257
-    n_layers: int = 12
+    n_layer: int = 12
     n_head: int = 12
     n_embd: int = 768
 
-class GPT:
+class GPT(nn.Module):
 
     def __init__(self, config):
         super().__init__()
@@ -78,10 +79,27 @@ class GPT:
         self.transformer = nn.ModuleDict(dict(
             wte = nn.Embedding(config.vocab_size, config.n_embd), # token embedding
             wpe = nn.Embedding(config.block_size, config.n_embd), # positional embedding
-            h = nn.ModuleList([Block(config) for _ in range(config.n_layers)]), # transformer block (hidden layers)
+            h = nn.ModuleList([Block(config) for _ in range(config.n_layer)]), # transformer block (hidden layers)
             ln_f = nn.LayerNorm(config.n_embd) # layernorm after the last block
         ))
         self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False) # language model head
+
+    # forward pass
+    def forward(self, idx):
+        B, T = idx.size()
+        assert T <= self.config.block_size, f"Cannot forward sequence of length {T}, block size is {self.config.block_size}"
+
+        pos = torch. arange(0, T, dtype=torch.long ,device=idx.device) # tensor of positions
+        pos_emb = self.transformer.wpe(pos) # Positional embedding
+        tok_emb = self.transformer.wte(idx) # Token embedding
+        x = tok_emb + pos_emb
+        for block in self.transformer.h:
+            x = block(x) # apply each block to the input x
+        x = self.transformer.ln_f(x)
+        logits = self.lm_head(x)
+        return logits
+
+
 
     # Load weights from a pretrained GPT2 model to initialize our model
     @classmethod
@@ -132,3 +150,6 @@ class GPT:
                     sd[k].copy_(sd_hf[k])  # copy from hf to our model
 
         return model
+
+model = GPT.from_pretrained('gpt2')
+print("didn't crash!")
