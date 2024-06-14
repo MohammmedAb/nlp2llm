@@ -85,7 +85,7 @@ class GPT(nn.Module):
         self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False) # language model head
 
     # forward pass
-    def forward(self, idx):
+    def forward(self, idx, target = None):
         # idx: [B, T] with B being the batch size and T the length of the sequence
 
         B, T = idx.size()
@@ -99,7 +99,9 @@ class GPT(nn.Module):
             x = block(x) # apply each block to the input x
         x = self.transformer.ln_f(x)
         logits = self.lm_head(x)
-        return logits
+        if target is not None:
+            loss = F.cross_entropy(logits.view(-1, logits.size(-1)), target.view(-1))
+        return logits, loss
 
 
 
@@ -174,14 +176,15 @@ y = buf[1:].view(B, T)
 
 # get logits
 model = GPT(GPTConfig())
-model.eval()
 model.to(device)
-logits = model(x.to(device))
-print(logits.shape)
+logits, loss = model(x, y)
+# the inital loss should be: -log(1/vocab_size) = -log(1/50257) = ~10.82
+print(loss)
 import sys; sys.exit(0)
 
 
 #prefix tokens as starting point for the model
+model.eval()
 num_return_sequences = 5
 max_length = 30
 tokens = enc.encode("Hello i'm a language model, ")
