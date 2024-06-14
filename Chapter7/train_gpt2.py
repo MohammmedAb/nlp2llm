@@ -171,15 +171,23 @@ text = text[:1000]
 tokens = enc.encode(text)
 B, T = 4, 32
 buf = torch.tensor(tokens[:B*T + 1])
+buf = buf.to(device)
 x = buf[:-1].view(B, T)
 y = buf[1:].view(B, T)
 
 # get logits
 model = GPT(GPTConfig())
 model.to(device)
-logits, loss = model(x, y)
-# the inital loss should be: -log(1/vocab_size) = -log(1/50257) = ~10.82
-print(loss)
+
+## optimize
+optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4)
+for i in range(50):
+    # model.train()
+    optimizer.zero_grad()
+    logits, loss = model(x, y)
+    loss.backward()
+    optimizer.step()
+    print(f'iter {i}, loss: {loss.item()}') # the inital loss should be: -log(1/vocab_size) = -log(1/50257) = ~10.82
 import sys; sys.exit(0)
 
 
