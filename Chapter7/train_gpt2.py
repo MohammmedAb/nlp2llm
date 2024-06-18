@@ -208,14 +208,20 @@ elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
 print(f"using device: {device}")
 device_type = "cuda" if device.startswith("cuda") else "cpu"
 
+torch.manual_seed(1337)
+if torch.cuda.is_available():
+    torch.cuda.manual_seed(1337)
+
 train_loader = DataLoaderLite(B=4, T=32)
 
 # get logits
 model = GPT(GPTConfig())
 model.to(device)
 
+
+
 # optimize
-optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4)
+optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4, betas=(0.9, 0.95), eps=1e-8)
 for i in range(50):
     # model.train()
     x, y = train_loader.next_batch()
@@ -223,8 +229,9 @@ for i in range(50):
     optimizer.zero_grad()
     logits, loss = model(x, y)
     loss.backward()
+    norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
     optimizer.step()
-    print(f'iter {i}, loss: {loss.item()}') # the inital loss should be: -log(1/vocab_size) = -log(1/50257) = ~10.82
+    print(f'iter {i} | loss: {loss.item()} | norm: {norm: .4f}') # the inital loss should be: -log(1/vocab_size) = -log(1/50257) = ~10.82
 import sys; sys.exit(0)
 
 
