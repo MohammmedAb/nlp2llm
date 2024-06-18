@@ -1,4 +1,6 @@
 from dataclasses import dataclass
+import math
+import time
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
@@ -218,20 +220,44 @@ train_loader = DataLoaderLite(B=4, T=32)
 model = GPT(GPTConfig())
 model.to(device)
 
+max_lr = 6e-4
+min_lr = max_lr * 0.1
+warmup_steps = 10
+max_steps = 50
 
-
+def get_lr(it):
+    # 1) linear warmup
+    if it < warmup_steps:
+        return max_lr * (it+1) / warmup_steps
+    # 2) min learning rate 
+    if it > max_steps:
+        return min_lr
+    # 3) in between, use cosine decay down to min lr
+    decay_ratio = (it - warmup_steps) / (max_steps - warmup_steps)
+    assert 0 <= decay_ratio <= 1
+    coeff = 0.5 * (1.0 + math.cos(math.pi * decay_ratio))
+    return min_lr + coeff * (max_lr - min_lr)
 # optimize
 optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4, betas=(0.9, 0.95), eps=1e-8)
-for i in range(50):
+for step in range(max_steps):
     # model.train()
+    t0 = time.time()
     x, y = train_loader.next_batch()
     x, y = x.to(device), y.to(device)
     optimizer.zero_grad()
-    logits, loss = model(x, y)
+    logits, loss = model(x, y) # the inital loss should be: -log(1/vocab_size) = -log(1/50257) = ~10.82
     loss.backward()
     norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+    
+    # cosine learning rate schedule
+    lr = get_lr(step)
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = lr
+
     optimizer.step()
-    print(f'iter {i} | loss: {loss.item()} | norm: {norm: .4f}') # the inital loss should be: -log(1/vocab_size) = -log(1/50257) = ~10.82
+    t1 = time.time()
+    dt = t1 - t0
+    print(f'iter {step} | loss: {loss.item()} | lr: {lr:.4e} | norm: {norm: .4f} | dt: {dt*10000: .2f}ms | ') 
 import sys; sys.exit(0)
 
 
