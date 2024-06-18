@@ -239,10 +239,19 @@ torch.manual_seed(1337)
 if torch.cuda.is_available():
     torch.cuda.manual_seed(1337)
 
-train_loader = DataLoaderLite(B=4, T=32)
+# gradient accumulation: we use it to simulate a larger batch size
+total_batch_size = 1024 # is supposed to be => 2^19, ~0.5M tokens
+B = 4 # Batch size  
+T = 32 # sequence length
+assert total_batch_size % (B * T) == 0, "Make sure total_batch_size is divisible by B * T"
+grad_acc_steps = total_batch_size // (B * T)
+print(f"Total desired batch size: {total_batch_size:,}")
+print(f"Gradient accumulation steps: {grad_acc_steps}")
+
+train_loader = DataLoaderLite(B=B, T=T)
 
 # get logits
-model = GPT(GPTConfig())
+model = GPT(GPTConfig(vocab_size=50304))
 model.to(device)
 # model = torch.compile(model)
 
@@ -269,11 +278,15 @@ optimizer = model.config_optimizer(weight_decay=0.1, learning_rate=6e-4, device=
 for step in range(max_steps):
     # model.train()
     t0 = time.time()
-    x, y = train_loader.next_batch()
-    x, y = x.to(device), y.to(device)
     optimizer.zero_grad()
-    logits, loss = model(x, y) # the inital loss should be: -log(1/vocab_size) = -log(1/50257) = ~10.82
-    loss.backward()
+    loss_accum = 0
+    for micro_step in range(grad_acc_steps):
+        x, y = train_loader.next_batch()
+        x, y = x.to(device), y.to(device)
+        logits, loss = model(x, y) # the inital loss should be: -log(1/vocab_size) = -log(1/50257) = ~10.82
+        loss = loss / grad_acc_steps
+        loss_accum += loss.detach() 
+        loss.backward()
     norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
     
     # cosine learning rate schedule
@@ -284,7 +297,7 @@ for step in range(max_steps):
     optimizer.step()
     t1 = time.time()
     dt = t1 - t0
-    print(f'iter {step} | loss: {loss.item()} | lr: {lr:.4e} | norm: {norm: .4f} | dt: {dt*10000: .2f}ms | ') 
+    print(f'iter {step} | loss: {loss_accum.item()} | lr: {lr:.4e} | norm: {norm: .4f} | dt: {dt*10000: .2f}ms | ') 
 import sys; sys.exit(0)
 
 
