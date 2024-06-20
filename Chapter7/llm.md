@@ -5,6 +5,12 @@
 - [] [LLM Course](https://github.com/mlabonne/llm-course)
 - [] [LLM Traning](https://rentry.org/llm-training)
 
+# Project Idea
+- Code completion Model
+## Dataset
+- [the-stack](https://huggingface.co/datasets/bigcode/the-stack)
+- [bigcodebench](https://huggingface.co/datasets/bigcode/bigcodebench)
+
 # Note
 ## Architecture
 ![GPT-2 Architecture](gpt2Architecture.jpg)
