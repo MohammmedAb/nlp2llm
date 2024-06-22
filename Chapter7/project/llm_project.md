@@ -13,9 +13,8 @@
 - [bigcodebench](https://huggingface.co/datasets/bigcode/bigcodebench)
 
 ## My Project Plan
-1. Make the base architecture
-2. Build the tokenizer
-3. Go through the forward pass (using tiny shakespeare) and get the output
-
-4. return the loss from the forward pass
-5. Go through the backward pass 
+1. [x] Make the base architecture
+2. [] Go through the forward pass (using tiny shakespeare) and get the output
+2. [] Build the tokenizer and the dataloader
+4. [] return the loss from the forward pass
+5. [] Go through the backward pass 
