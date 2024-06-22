@@ -7,9 +7,7 @@
 
 # Project Idea
 - Code completion Model
-## Dataset
-- [the-stack](https://huggingface.co/datasets/bigcode/the-stack)
-- [bigcodebench](https://huggingface.co/datasets/bigcode/bigcodebench)
+- [Project md](project/llm_project.md)
 
 # Note
 ## Architecture
