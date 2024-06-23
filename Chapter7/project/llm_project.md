@@ -8,13 +8,16 @@
 - [24 game](https://github.com/zhangfaen/24GameGPT)
 
 ## Dataset
+- [starcoderdata](https://huggingface.co/datasets/bigcode/starcoderdata)
 - [CodeXGLUE](https://github.com/microsoft/CodeXGLUE)
 - [the-stack](https://huggingface.co/datasets/bigcode/the-stack)
 - [bigcodebench](https://huggingface.co/datasets/bigcode/bigcodebench)
 
 ## My Project Plan
 1. [x] Make the base architecture
-2. [] Go through the forward pass (using tiny shakespeare) and get the output
-2. [] Build the tokenizer and the dataloader
-4. [] return the loss from the forward pass
+2. [x] Go through the forward pass  and get the output
+3. [x] Build the tokenizer
+4. [x] return the loss from the forward pass
 5. [] Go through the backward pass 
+
+6. [] Bulid my own tokenizer for code completion model using tiktoken

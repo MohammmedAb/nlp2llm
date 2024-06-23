@@ -63,7 +63,7 @@ class Block(nn.Module):
 @dataclass
 class GPTConfig:
     block_size: int= 1024 # maximum length of the input sequence
-    vocab_size: int = 50257 # size of the vocabulary
+    vocab_size: int = 100277 # size of the vocabulary
     n_layer: int = 12 # Transformer layers
     n_head: int = 12 # Attention heads
     n_embd: int = 768 # Embedding dimension
@@ -81,7 +81,7 @@ class GPT(nn.Module):
         ))
         self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
 
-    def forward(self, idx):
+    def forward(self, idx, target = None):
         B, T = idx.size()
         assert T <= self.config.block_size, 'Cannot forward, model block size is exhausted'
 
@@ -93,15 +93,57 @@ class GPT(nn.Module):
             x = block(x)
         x = self.transformer.ln_f(x)
         logits = self.lm_head(x)
-        return logits
-    
+        if target is not None:
+            loss = F.cross_entropy(logits.view(-1, logits.size(-1)), target.view(-1))
+        return logits, loss
+
+class DataLoaderLite:
+    def __init__(self, B, T):
+        self.B = B
+        self.T = T
+
+        with open('code_sample.txt', 'r') as f:
+            text = f.read()
+        enc = tiktoken.get_encoding('cl100k_base')
+        tokens = enc.encode(text)
+        self.tokens = torch.tensor(tokens)
+
+        self.current_position = 0
+
+    def next_batch(self):
+        B, T = self.B, self.T
+        buf = self.tokens[self.current_position:self.current_position+B*T+1]
+        x = (buf[:-1].view(B, T))
+        y = (buf[1:].view(B, T))
+
+        self.current_position += B*T
+
+        if self.current_position + (B*T + 1) > len(self.tokens):
+            self.current_position = 0
+        return x, y
+
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+print(f"Using device: {device}")
+
 model = GPT(GPTConfig())
-# print(model)
+model = model.to(device)
+
+train_loader = DataLoaderLite(4, 32)
+
+optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4)
+for i in range(50):
+    x, y = train_loader.next_batch()
+    x, y = x.to(device), y.to(device)
+    optimizer.zero_grad()
+    logits, loss = model(x, y)
+    loss.backward()
+    optimizer.step()
+    print(f"Step {i}, Loss: {loss.item()}")
+
+import sys; sys.exit(0)
 num_return_sequences = 5
 max_length = 30
 model.eval()
-
-enc = tiktoken.get_encoding('o200k_base')
 tokens = enc.encode("Hello i'm a language model,")
 tokens = torch.tensor(tokens).unsqueeze(0).repeat(num_return_sequences, 1)
 x = tokens
