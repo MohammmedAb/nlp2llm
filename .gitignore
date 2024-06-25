@@ -29,3 +29,4 @@ config.ini
 .env
 .env.local
 .env.*.local
+*data
