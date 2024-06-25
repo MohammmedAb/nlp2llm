@@ -97,20 +97,85 @@ def get_lr(it):
 
 optimizer = model.config_optimizer(weight_decay=0.1, learning_rate=6e-4, device=device)
 
+log_dir = "log"
+os.makedirs(log_dir, exist_ok=True)
+log_file = os.path.join(log_dir, f"log.txt")
+with open(log_file, "w") as f: # open for writing to clear the file
+    pass
+
 for step in range(max_steps):
     t0 = time.time()
-    loss_accum = 0
+    last_step = (step == max_steps - 1)
+
+    
+    # Validation:
+    if step % 50 == 0 or last_step:
+        model.eval()
+        val_loader.reset()
+        with torch.no_grad():
+            val_loss_accum = 0.0
+            val_loss_steps = 20
+            for _ in range(val_loss_steps):       
+                x, y = val_loader.next_batch()
+                x, y = x.to(device), y.to(device)
+                with torch.autocast(device_type=device, dtype=torch.bfloat16 if device == 'cuda' else torch.float32):
+                    logits, loss = model(x, y)
+                loss = loss / val_loss_steps
+                val_loss_accum += loss.detach()
+
+        print(f"Validation loss: {val_loss_accum.item():.4f}")
+        with open(log_file, 'a') as f:
+            f.write(f"{step} val {val_loss_accum.item():.4f}\n")
+        if step > 0 and (step % 150 == 0 or last_step):
+            checkpoint_path = os.path.join(log_dir, f"model_{step:05d}.pt")
+            checkpoint = {
+                'model': model.state_dict(),
+                'config': model.config,
+                'step': step,
+                'val_loss': val_loss_accum.item()
+            }
+            
+            torch.save(checkpoint, checkpoint_path)
+
+    # generate from the model
+    if ((step > 0 and step % 50 == 0) or last_step):
+        model.eval()  
+        num_return_sequences = 4
+        max_length = 32
+        tokens = enc.encode("import pandas as pd\n")
+        tokens = torch.tensor(tokens, dtype=torch.long)
+        tokens = tokens.unsqueeze(0).repeat(num_return_sequences, 1)
+
+        while tokens.size(1) < max_length:
+            with torch.no_grad():
+                logits, loss = model(tokens)
+                logits = logits[:, -1, :]
+                probs = F.softmax(logits, dim=-1)
+                topk_probs, topk_indices = torch.topk(probs, 10, dim=-1)
+                ix = torch.multinomial(topk_probs, 1)
+                xcol = torch.gather(topk_indices, -1, ix)
+                tokens = torch.cat((tokens, xcol), dim=1)
+
+            for i in range(num_return_sequences):
+                decoded_tokens = tokens[i, :max_length].tolist()
+                decoded = enc.decode(decoded_tokens)
+                print('>', decoded)         
+
+    # Traning: 
+    model.train()
+    optimizer.zero_grad()
+    loss_accum = 0.0
     for micro_step in range(grad_acc_steps):
         x, y = train_loader.next_batch()
         x, y = x.to(device), y.to(device)
-        
-        model.train()
-        optimizer.zero_grad()
-        logits, loss = model(x, y)
+        with torch.autocast(device_type= device, dtype=torch.bfloat16 if device == 'cuda' else torch.float32):
+            logits, loss = model(x, y)
+
         loss = loss / grad_acc_steps
         loss_accum += loss.detach() 
         loss.backward()
     norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+    
     lr = get_lr(step)
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
@@ -119,28 +184,7 @@ for step in range(max_steps):
     t1 = time.time()
     dt = t1 - t0 # time difference in seconds
     print(f"Step {step}, Loss: {loss_accum.item()}, dt: {dt*1000:.2f}ms ")
+    with open(log_file, 'a') as f:
+        f.write(f"{step} train {loss_accum.item():.6f}\n")
 
-model.eval()
-num_return_sequences = 4
-max_length = 30
-tokens = enc.encode("def main():")
-tokens = torch.tensor(tokens, dtype=torch.long)
-tokens = tokens.unsqueeze(0).repeat(num_return_sequences, 1)
-
-while tokens.size(1) < max_length:
-    with torch.no_grad():
-        logits, loss = model(tokens)
-        logits = logits[:, -1, :]
-        probs = F.softmax(logits, dim=-1)
-        topk_probs, topk_indices = torch.topk(probs, 10, dim=-1)
-        ix = torch.multinomial(topk_probs, 1)
-        xcol = torch.gather(topk_indices, -1, ix)
-        tokens = torch.cat((tokens, xcol), dim=1)
-
-    for i in range(num_return_sequences):
-        decoded_tokens = tokens[i, :max_length].tolist()
-        decoded = enc.decode(decoded_tokens)
-        print('>', decoded)
-
-
-sys.exit(0)
+# sys.exit(0)

@@ -112,7 +112,7 @@ class GPT(nn.Module):
         B, T = idx.size()
         assert T <= self.config.block_size, 'Cannot forward, model block size is exhausted'
 
-        pos = torch.arange(0, T, dtype=torch.long)
+        pos = torch.arange(0, T, dtype=torch.long, device = idx.device)
         pos_emb = self.transformer.wpe(pos)
         tok_emb = self.transformer.wte(idx)
         x = tok_emb + pos_emb
