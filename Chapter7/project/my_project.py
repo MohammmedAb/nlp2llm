@@ -3,6 +3,9 @@ from dataclasses import dataclass
 import torch
 import torch.nn.functional as F
 import tiktoken
+import os
+import numpy as np
+import sys
 
 class MLP(nn.Module):
     def __init__(self, config):
@@ -114,18 +117,32 @@ class GPT(nn.Module):
             loss = F.cross_entropy(logits.view(-1, logits.size(-1)), target.view(-1))
         return logits, loss
 
-class DataLoaderLite:
-    def __init__(self, B, T):
+def load_tokens(filename):
+    npt = np.load(filename)
+    npt = npt.astype(np.int32)
+    ptt = torch.tensor(npt, dtype=torch.long)
+    return ptt
+
+class DataLoader:
+    def __init__(self, B, T, split):
         self.B = B
         self.T = T
 
-        with open('code_sample.txt', 'r') as f:
-            text = f.read()
-        enc = tiktoken.get_encoding('cl100k_base')
-        tokens = enc.encode(text)
-        self.tokens = torch.tensor(tokens)
+        assert split in {'train', 'val'}
+        data_root = "npy_data"
+        shards = os.listdir(data_root)
+        shards = [s for s in shards if split in s]
+        shards = sorted(shards)
+        shards = [os.path.join(data_root, s) for s in shards]
+        self.shards = shards
+        assert len(shards) > 0, f"No shards found for split {split}"
+        # enc = tiktoken.get_encoding('cl100k_base')
+        self.reset()
 
-        self.current_position = 0
+    def reset(self):
+        self.current_shard = 0
+        self.tokens = load_tokens(self.shards[self.current_shard])
+        self.current_position = self.B * self.T
 
     def next_batch(self):
         B, T = self.B, self.T
@@ -136,9 +153,25 @@ class DataLoaderLite:
         self.current_position += B*T
 
         if self.current_position + (B*T + 1) > len(self.tokens):
-            self.current_position = 0
+            self.current_shard = (self.current_shard + 1) % len(self.shards)
+            self.tokens = load_tokens(self.shards[self.current_shard])
+            self.current_position = B*T
         return x, y
+# Test the data loader:
+train_loader = DataLoader(4, 32, 'train') 
+x, y = train_loader.next_batch()
+print('First batch:')
+print(x.shape, y.shape)
+print(x[0])
+print(y[0])
 
+# decode the first batch
+print('----Decoded----\n')
+dec = tiktoken.get_encoding('cl100k_base')
+print(dec.decode(x[1].tolist()))
+
+
+sys.exit(0)
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print(f"Using device: {device}")
 
@@ -157,7 +190,7 @@ for i in range(50):
     optimizer.step()
     print(f"Step {i}, Loss: {loss.item()}")
 
-import sys; sys.exit(0)
+sys.exit(0)
 num_return_sequences = 5
 max_length = 30
 model.eval()
