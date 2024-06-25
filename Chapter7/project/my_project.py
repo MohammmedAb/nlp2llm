@@ -1,3 +1,5 @@
+import inspect
+import math
 import torch.nn as nn
 from dataclasses import dataclass
 import torch
@@ -6,6 +8,16 @@ import tiktoken
 import os
 import numpy as np
 import sys
+
+"""
+Model Info:
+- GPT model with 12 layers, 12 heads, 768 hidden size
+- Number of parameters: 162M
+- Dataset: Bigcode/StarCoder dataset
+- Tokenizer: cl100k_base
+- Training data: 185M tokens
+- Batch size: 512k tokens
+"""
 
 class MLP(nn.Module):
     def __init__(self, config):
@@ -116,6 +128,30 @@ class GPT(nn.Module):
         if target is not None:
             loss = F.cross_entropy(logits.view(-1, logits.size(-1)), target.view(-1))
         return logits, loss
+    
+    def config_optimizer(self, weight_decay, learning_rate, device):
+        # start with all the parameters that require a gradient
+        param_dict = {pn: p for pn, p in self.named_parameters()}
+        param_dict = {pn: p for pn, p in param_dict.items() if p.requires_grad}
+
+        decay_parameters = [p for n, p in param_dict.items() if p.dim() >= 2] # emdeddings and metrices in the linear layers
+        nondecay_parameters = [p for n, p in param_dict.items() if p.dim() < 2] # biases (one dimentional tensors)
+        optim_groups = [
+            {'params': decay_parameters, 'weight_decay': weight_decay},
+            {'params': nondecay_parameters, 'weight_decay': 0.0}
+        ]
+
+        num_decay_params = sum(p.numel() for p in decay_parameters)
+        num_nondecay_params = sum(p.numel() for p in nondecay_parameters)
+        print(f"number decayed parameter tensor: {len(decay_parameters)} with {num_decay_params:,} parameters")
+        print(f"number non-decayed parameter tensor: {len(nondecay_parameters)} with {num_nondecay_params:,} parameters")
+
+        fused_available =  'fused' in inspect.signature(torch.optim.AdamW).parameters
+        use_fused = fused_available and 'cuda' in device
+        print(f"using fused adam: {use_fused}")
+
+        optimizer = torch.optim.AdamW(optim_groups, lr=learning_rate, betas=(0.9, 0.95), eps=1e-8, fused=use_fused)
+        return optimizer
 
 def load_tokens(filename):
     npt = np.load(filename)
@@ -136,7 +172,6 @@ class DataLoader:
         shards = [os.path.join(data_root, s) for s in shards]
         self.shards = shards
         assert len(shards) > 0, f"No shards found for split {split}"
-        # enc = tiktoken.get_encoding('cl100k_base')
         self.reset()
 
     def reset(self):
@@ -157,30 +192,53 @@ class DataLoader:
             self.tokens = load_tokens(self.shards[self.current_shard])
             self.current_position = B*T
         return x, y
-# Test the data loader:
-train_loader = DataLoader(4, 32, 'train') 
-x, y = train_loader.next_batch()
-print('First batch:')
-print(x.shape, y.shape)
-print(x[0])
-print(y[0])
-
-# decode the first batch
-print('----Decoded----\n')
-dec = tiktoken.get_encoding('cl100k_base')
-print(dec.decode(x[1].tolist()))
 
 
-sys.exit(0)
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print(f"Using device: {device}")
 
 model = GPT(GPTConfig())
 model = model.to(device)
+model_num_of_params = sum(p.numel() for p in model.parameters())
+print(f"Model has {model_num_of_params} parameters")
+enc = tiktoken.get_encoding('cl100k_base')
+# sys.exit(0)
 
-train_loader = DataLoaderLite(4, 32)
+total_batch_size = 524288 # 512k tokens
+B = 4 # micro batch size - 4 just for testing
+T = 32  # sequence length - 32 just for testing
+assert total_batch_size % (B*T) == 0, 'Batch size must be divisible by B*T'
+grad_acc_steps = total_batch_size // (B*T)
+print(f"Total batch size: {total_batch_size}")
+print(f"Calculating gradients every {grad_acc_steps} steps")
 
-optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4)
+train_loader = DataLoader(B=B, T=T, split='train')
+val_loader = DataLoader(B=B, T=T, split='val')
+
+use_compile = False
+if use_compile:
+    model = torch.compile(model)
+
+max_lr = 6e-4
+min_lr = max_lr * 0.1
+warmup_steps = 10
+max_steps = 50 # total number of steps in one epoch: 185M // 512k = 361
+
+def get_lr(it):
+    # 1) linear warmup
+    if it < warmup_steps:
+        return max_lr * (it+1) / warmup_steps
+    # 2) min learning rate 
+    if it > max_steps:
+        return min_lr
+    # 3) in between, use cosine decay down to min lr
+    decay_ratio = (it - warmup_steps) / (max_steps - warmup_steps)
+    assert 0 <= decay_ratio <= 1
+    coeff = 0.5 * (1.0 + math.cos(math.pi * decay_ratio))
+    return min_lr + coeff * (max_lr - min_lr)
+
+optimizer = model.cofig_optimizer(weight_decay=0.1, learning_rate=6e-4, device=device)
+
 for i in range(50):
     x, y = train_loader.next_batch()
     x, y = x.to(device), y.to(device)
