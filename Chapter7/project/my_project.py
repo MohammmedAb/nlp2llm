@@ -1,5 +1,6 @@
 import inspect
 import math
+import time
 import torch.nn as nn
 from dataclasses import dataclass
 import torch
@@ -125,6 +126,8 @@ class GPT(nn.Module):
             x = block(x)
         x = self.transformer.ln_f(x)
         logits = self.lm_head(x)
+
+        loss = None
         if target is not None:
             loss = F.cross_entropy(logits.view(-1, logits.size(-1)), target.view(-1))
         return logits, loss
@@ -204,7 +207,7 @@ print(f"Model has {model_num_of_params} parameters")
 enc = tiktoken.get_encoding('cl100k_base')
 # sys.exit(0)
 
-total_batch_size = 524288 # 512k tokens
+total_batch_size = 256 # 524288 ~0.5M tokens  
 B = 4 # micro batch size - 4 just for testing
 T = 32  # sequence length - 32 just for testing
 assert total_batch_size % (B*T) == 0, 'Batch size must be divisible by B*T'
@@ -222,7 +225,7 @@ if use_compile:
 max_lr = 6e-4
 min_lr = max_lr * 0.1
 warmup_steps = 10
-max_steps = 50 # total number of steps in one epoch: 185M // 512k = 361
+max_steps = 100 # total number of steps in one epoch: 185M // 512k = 361
 
 def get_lr(it):
     # 1) linear warmup
@@ -237,16 +240,53 @@ def get_lr(it):
     coeff = 0.5 * (1.0 + math.cos(math.pi * decay_ratio))
     return min_lr + coeff * (max_lr - min_lr)
 
-optimizer = model.cofig_optimizer(weight_decay=0.1, learning_rate=6e-4, device=device)
+optimizer = model.config_optimizer(weight_decay=0.1, learning_rate=6e-4, device=device)
 
-for i in range(50):
-    x, y = train_loader.next_batch()
-    x, y = x.to(device), y.to(device)
-    optimizer.zero_grad()
-    logits, loss = model(x, y)
-    loss.backward()
+for step in range(max_steps):
+    t0 = time.time()
+    loss_accum = 0
+    for micro_step in range(grad_acc_steps):
+        x, y = train_loader.next_batch()
+        x, y = x.to(device), y.to(device)
+        
+        model.train()
+        optimizer.zero_grad()
+        logits, loss = model(x, y)
+        loss = loss / grad_acc_steps
+        loss_accum += loss.detach() 
+        loss.backward()
+    norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+    lr = get_lr(step)
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = lr
     optimizer.step()
-    print(f"Step {i}, Loss: {loss.item()}")
+    
+    t1 = time.time()
+    dt = t1 - t0 # time difference in seconds
+    print(f"Step {step}, Loss: {loss_accum.item()}, dt: {dt*1000:.2f}ms ")
+
+model.eval()
+num_return_sequences = 4
+max_length = 30
+tokens = enc.encode("def main():")
+tokens = torch.tensor(tokens, dtype=torch.long)
+tokens = tokens.unsqueeze(0).repeat(num_return_sequences, 1)
+
+while tokens.size(1) < max_length:
+    with torch.no_grad():
+        logits, loss = model(tokens)
+        logits = logits[:, -1, :]
+        probs = F.softmax(logits, dim=-1)
+        topk_probs, topk_indices = torch.topk(probs, 10, dim=-1)
+        ix = torch.multinomial(topk_probs, 1)
+        xcol = torch.gather(topk_indices, -1, ix)
+        tokens = torch.cat((tokens, xcol), dim=1)
+
+    for i in range(num_return_sequences):
+        decoded_tokens = tokens[i, :max_length].tolist()
+        decoded = enc.decode(decoded_tokens)
+        print('>', decoded)
+
 
 sys.exit(0)
 num_return_sequences = 5
