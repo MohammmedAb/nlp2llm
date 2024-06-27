@@ -35,14 +35,17 @@
 ### Chapter6:  Transformers
 8. [x] [Transformers](Chapter6/transformers.md)
 
-### Chapter7:  Large Language Models
-9. [ ] [Large Language Models](Chapter7/llm.md)
+### Chapter7:  Large Language Models - Part one
+9. [x] [Large Language Models - Intro](Chapter7/llm.md)
 
-### Chapter99: Advanced Topics in LLMs
-8. [ ] [Pretraining](Chapter4/pretraining.md)
-9. [ ] [Post-training](Chapter4/posttraining.md)
+### Chapter8: Large Language Models - Part two
+8. [ ] [Large Language Models - Advanced](Chapter8/llm_advanced.md)
+
+### Chapter9: Post-training (Fine-tuning)
+9. [ ] [Post-training](Chapter9/posttraining.md)
     - [ ] Model Alignment (RLHF llm)
-    - [ ] 
+    - [ ] Fine Tuning
+
 ### Final Project Ideas
 - Idea one: finetune BloombergGPT on Saudi Market, and use it to help in stock advice or to chat with the markt.
 - Idea two: A library for a time series forecasting using Transformers.  

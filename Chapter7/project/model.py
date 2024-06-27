@@ -10,8 +10,6 @@ Model Info:
 - Number of parameters: 162M
 - Dataset: Bigcode/StarCoder dataset
 - Tokenizer: cl100k_base
-- Training data: 185M tokens
-- Batch size: 512k tokens
 """
 
 class MLP(nn.Module):

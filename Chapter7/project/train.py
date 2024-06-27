@@ -9,7 +9,11 @@ import sys
 import torch.nn.functional as F
 import torch
 
-
+"""
+- Training data: 185M tokens
+- Batch size: 524288 tokens
+- Max steps (one epoch): 185M/524288 = 352 steps to go through the entire dataset
+"""
 
 def load_tokens(filename):
     npt = np.load(filename)
@@ -62,9 +66,12 @@ print(f"Model has {model_num_of_params} parameters")
 enc = tiktoken.get_encoding('cl100k_base')
 # sys.exit(0)
 
-total_batch_size = 256 # 524288 ~0.5M tokens  
+#Gradient Accumulation
+total_batch_size = 524288 # 524288 ~0.5M tokens, This is the batch size in the paper of GPT3 small model
 B = 4 # micro batch size - 4 just for testing
 T = 32  # sequence length - 32 just for testing
+
+# Because we can't fit the entire batch in memory, we split it into micro-batches (Gradient Accumulation)
 assert total_batch_size % (B*T) == 0, 'Batch size must be divisible by B*T'
 grad_acc_steps = total_batch_size // (B*T)
 print(f"Total batch size: {total_batch_size}")
@@ -79,8 +86,8 @@ if use_compile:
 
 max_lr = 6e-4
 min_lr = max_lr * 0.1
-warmup_steps = 10
-max_steps = 1 # total number of steps in one epoch: 185M // 512k = 361
+warmup_steps = 100
+max_steps = 352 # 352 steps is one epoch
 
 def get_lr(it):
     # 1) linear warmup
@@ -102,6 +109,7 @@ os.makedirs(log_dir, exist_ok=True)
 log_file = os.path.join(log_dir, f"log.txt")
 with open(log_file, "w") as f: # open for writing to clear the file
     pass
+
 
 for step in range(max_steps):
     t0 = time.time()
@@ -165,13 +173,13 @@ for step in range(max_steps):
     model.train()
     optimizer.zero_grad()
     loss_accum = 0.0
-    for micro_step in range(grad_acc_steps):
+    for micro_step in range(grad_acc_steps): # Here we are computing the gradients for an entire batch (0.5M tokens)
         x, y = train_loader.next_batch()
         x, y = x.to(device), y.to(device)
         with torch.autocast(device_type= device, dtype=torch.bfloat16 if device == 'cuda' else torch.float32):
             logits, loss = model(x, y)
 
-        loss = loss / grad_acc_steps
+        loss = loss / grad_acc_steps # Normalize the loss
         loss_accum += loss.detach() 
         loss.backward()
     norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
