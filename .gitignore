@@ -30,3 +30,4 @@ config.ini
 .env.local
 .env.*.local
 *data
+*.pt
