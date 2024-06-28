@@ -68,8 +68,8 @@ enc = tiktoken.get_encoding('cl100k_base')
 
 #Gradient Accumulation
 total_batch_size = 524288 # 524288 ~0.5M tokens, This is the batch size in the paper of GPT3 small model
-B = 4 # micro batch size - 4 just for testing
-T = 32  # sequence length - 32 just for testing
+B = 8 # micro batch size - 4 just for testing
+T = 1024  # sequence length - 32 just for testing
 
 # Because we can't fit the entire batch in memory, we split it into micro-batches (Gradient Accumulation)
 assert total_batch_size % (B*T) == 0, 'Batch size must be divisible by B*T'
@@ -153,6 +153,7 @@ for step in range(max_steps):
         tokens = enc.encode("import pandas as pd\n")
         tokens = torch.tensor(tokens, dtype=torch.long)
         tokens = tokens.unsqueeze(0).repeat(num_return_sequences, 1)
+        tokens = tokens.to(device)
 
         while tokens.size(1) < max_length:
             with torch.no_grad():
