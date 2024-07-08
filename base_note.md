@@ -38,7 +38,7 @@
 ### Chapter7:  Large Language Models - Part one
 9. [x] [Large Language Models - Intro](Chapter7/llm.md)
 
-### Chapter8: Large Language Models - Part two
+### Chapter8: Large Language Models - Part two:
 8. [ ] [Large Language Models - Advanced](Chapter8/llm_advanced.md)
 
 ### Chapter9: Post-training (Fine-tuning)
@@ -48,11 +48,29 @@
 
 ### Final Project Ideas
 - Idea one: finetune BloombergGPT on Saudi Market, and use it to help in stock advice or to chat with the markt.
-- Idea two: A library for a time series forecasting using Transformers.  
-    - I will bulid it on top of `Pytorch`
-    - Similar concept to Fastai's `timeseries` library.
-- GUI for Nerual Network Design
-    - The user will draw the layers and everything, and the app will generate the code for the user.
+
+- **Idea two:** 
+> An Open Source Tool as a Foundation and Future SaaS Project
+The project aims to simplify the process of designing customized models for companies or individual projects.
+#### Features:
+- Model Selection: Users can choose the model that best suits their needs.
+- Database Integration: Users can connect the model to their preferred database.
+- Conversation Style: Users can select the desired conversation method for the model.
+- Vector Database Connection: Users can integrate the model with their chosen vector database.
+- Interaction Style: Users can define the style in which the model interacts.
+- Tool Integration: Users can connect the model with various tools, such as:
+    - Web browser
+    - Python, etc.
+- Fine-Tuning: Users can fine-tune the model for specific requirements.
+- User Interface Selection: Users can choose the user interface for the program.
+- Easy Integration: Users can easily integrate the model into their application.
+#### Inspiration:
+- Weaviate
+- [knime](https://www.knime.com/)
+- [mindsdb](https://mindsdb.com/)
+
+- ![](https://www.aporia.com/wp-content/webp-express/webp-images/uploads/2024/02/image-4.png.webp)
+- ![](https://www.aporia.com/wp-content/webp-express/webp-images/uploads/2024/02/image-1.png.webp)
 
 ## Extra Concepts
 - [ ] [Language Model Agents](Extra/lm_agents.md)
