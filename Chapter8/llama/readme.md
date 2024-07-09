@@ -30,14 +30,14 @@
 - [] Grouped-query-attention
 
 ##### RMSNorm
-> The vanilla network might have issues with the stability of parameters' gradients, delayed convergence. to reduce these issues, we use normalization techniques. RMSNorm is one of these techniques. 
+> The vanilla network might have issues with the stability of parameters' gradients, (Internal Covariate Shift) it makes traning the network slower, delayed convergence, as the neuorns are forces to re-adjust drasticaly because of the drastic changes in the output of the previous layer. to reduce these issues, we use normalization techniques. RMSNorm is one of these techniques. 
 Key differences between RMSNorm and LayerNorm:
 - A well-known explanation of the success of LayerNorm is its re-centering and re-scaling invariance property
 - RMSNorm only focuses on re-scaling invariance and regularizes the summed inputs simply according to the root mean square (RMS) statistic
 - Traditional LayerNorm involves calculating the mean and variance of activations for each layer, which can be computationally intensive, especially in large models or with high-dimensional data
 - RMSNorm simplifies this process by only calculating the root mean square (RMS) of the activations, which involves fewer operations than computing both mean and variance
 The formula for RMSNorm is:
-$$ RMS(a) = \sqrt{\frac{1}{n} \sum_{i=1}^{n} a_i^2} $$
+$$ \bar{a}_i = \frac{a_i}{\text{RMS}(\mathbf{a})}g_i, \quad \text{where} \quad \text{RMS}(\mathbf{a}) = \sqrt{\frac{1}{n} \sum_{i=1}^{n} a_i^2} $$
 
 ##### SwiGLU Activation Function
 > The SwiGLU activation function is based on the Swish activation function, which is a smooth and non-monotonic function that has been shown to outperform other commonly used activation functions such as ReLU and sigmoid in certain neural network architectures

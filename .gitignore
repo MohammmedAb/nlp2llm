@@ -31,3 +31,6 @@ config.ini
 .env.*.local
 *data
 *.pt
+
+# Ignore LLMs and other large files
+Meta-Llama*/
