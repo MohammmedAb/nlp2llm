@@ -4,10 +4,12 @@
 - [LLaMA 3 Architecture Blog](https://medium.com/@vi.ai_/exploring-and-building-the-llama-3-architecture-a-deep-dive-into-components-coding-and-43d4097cfbbb)
 - [TinyLlama](https://github.com/jzhang38/TinyLlama)
 - [llama3 from scratch](https://github.com/naklecha/llama3-from-scratch)
-- [bulding and traning llama3 from scratch](https://lightning.ai/fareedhassankhan12/studios/building-llama-3-from-scratch)
-- [LLaMA 3 Architecture Paper](https://ai.meta.com/blog/meta-llama-3/)
+- [LLaMA 3 Repo](https://github.com/meta-llama/llama3/blob/main/llama/model.py)
 - [Causal Attention Mechanism](https://snawarhussain.com/educational/llms/Causal-Attention-Mechanism-Pure-and-Simple/)
 - [LLaMA vinija's AI notes](https://vinija.ai/models/LLaMA/)
+
+- [LLaMA 3 implimentation/debuging](https://github.com/viai957/LexiGenesis)
+- [llama-inference](https://github.com/viai957/llama-inference)
 
 ## LLaMA 2 Paper notes
 ### Pretraning
@@ -28,6 +30,7 @@
 - [x] SwiGLU Activation Function
 - [x] rotary positional embeddings (RoPE)
 - [] Grouped-query-attention
+- [] KV Cache
 
 ##### RMSNorm
 > The vanilla network might have issues with the stability of parameters' gradients, (Internal Covariate Shift) it makes traning the network slower, delayed convergence, as the neuorns are forces to re-adjust drasticaly because of the drastic changes in the output of the previous layer. to reduce these issues, we use normalization techniques. RMSNorm is one of these techniques. 
@@ -58,3 +61,12 @@ RoPE allows the model have valuable properties including:
 
 What is a rotation matrix: rotation matrix is a matrix that rotates a vector to another vector by some angle
 
+#### KV Cache
+> Without KV Cache, the attention mechanism in transformer models has to compute the key-value pairs for each token at each time step. At each generation step we are recalculating the same previous token attention, when we actually just want to calculate the attention for the new token. Which can be computationally expensive and make the inference process slow. KV Cache is a technique used in transformer models to store the key-value pairs of the attention mechanism in memory, which can be reused across multiple time steps to reduce the computational cost of the attention mechanism.
+
+![](https://miro.medium.com/v2/resize:fit:720/format:webp/1*uyuyOW1VBqmF5Gtv225XHQ.gif)
+
+**Disadvantage of KV Cache**: KV Cache can increase the memory usage of the model, as it requires storing the key-value pairs of the attention mechanism in memory
+
+Equation of the memory usage of the KV Cache:
+$$ 2* \text{percision} * \text{n\_layers} * \text{h\_model} * \text{seqlen} * \text{batch} $$
