@@ -11,6 +11,8 @@
 - [LLaMA 3 implimentation/debuging](https://github.com/viai957/LexiGenesis)
 - [llama-inference](https://github.com/viai957/llama-inference)
 
+![](llama-architecture.png)
+
 ## LLaMA 2 Paper notes
 ### Pretraning
 #### Some Architecture Details
@@ -30,7 +32,7 @@
 - [x] SwiGLU Activation Function
 - [x] rotary positional embeddings (RoPE)
 - [] Grouped-query-attention
-- [] KV Cache
+- [x] KV Cache
 
 ##### RMSNorm
 > The vanilla network might have issues with the stability of parameters' gradients, (Internal Covariate Shift) it makes traning the network slower, delayed convergence, as the neuorns are forces to re-adjust drasticaly because of the drastic changes in the output of the previous layer. to reduce these issues, we use normalization techniques. RMSNorm is one of these techniques. 
@@ -70,3 +72,18 @@ What is a rotation matrix: rotation matrix is a matrix that rotates a vector to 
 
 Equation of the memory usage of the KV Cache:
 $$ 2* \text{percision} * \text{n\_layers} * \text{h\_model} * \text{seqlen} * \text{batch} $$
+
+#### Grouped-query-attention (GQA)
+> Grouped-query-attention (GQA) is a technique used in transformer models to group queries together and calculate the attention scores for multiple queries at the same time. it's a great optimization technique between multi-head (1-1-1 Q,K,V) and and multi-query (n-1-1 Q,K,V) attention. this will give us a good balance between the quality of the model and the speed of the inference time.
+
+![](GQA.png)
+
+**The problem we are trying to solve with GQA:**
+- GPU is very fast at performing calculations, but it is not very fast at transferring data between memory areas.
+- This means that we want to optimize the number we do PLUS the minimize the memory access/transfers.
+
+**The solution:**
+- We group the queries together, and for each group we have diffreent K and V, 
+so that we can calculate the attention scores for multiple queries at the same time.
+
+This will make our model have less parameters, and degrease the quality of the model slightly. **but, it will make the inference time faster.**
