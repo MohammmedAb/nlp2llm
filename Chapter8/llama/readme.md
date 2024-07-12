@@ -63,6 +63,8 @@ RoPE allows the model have valuable properties including:
 
 What is a rotation matrix: rotation matrix is a matrix that rotates a vector to another vector by some angle
 
+- It only applied to the K and V, not the Q
+
 #### KV Cache
 > Without KV Cache, the attention mechanism in transformer models has to compute the key-value pairs for each token at each time step. At each generation step we are recalculating the same previous token attention, when we actually just want to calculate the attention for the new token. Which can be computationally expensive and make the inference process slow. KV Cache is a technique used in transformer models to store the key-value pairs of the attention mechanism in memory, which can be reused across multiple time steps to reduce the computational cost of the attention mechanism.
 
