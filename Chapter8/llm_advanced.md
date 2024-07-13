@@ -6,7 +6,7 @@
 
 - [x] [Traning Hypermeters](https://rentry.org/llm-training#training-hyperparameters)
 
-- [ ] Learn About the Different Architectures of LLMs
+- [x] Learn About the Different Architectures of LLMs
     - llama
     - Mistral MOE
 
