@@ -104,7 +104,7 @@ class Attention(nn.Module):
         xv = xv.view(batch_size, seq_len, self.n_kv_heads, self.head_dim).to(x.device)
 
         xq = apply_rotary_emb(xq, freq_complex, device = x.device)
-        xq = apply_rotary_emb(xq, freq_complex, device = x.device)
+        
 
         self.cache_k[:batch_size, start_pos:start_pos + seq_len] = xk
         self.cache_v[:batch_size, start_pos:start_pos + seq_len] = xv

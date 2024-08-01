@@ -1,5 +1,10 @@
 # NLP/LLM - Journey Base Note
 
+Personal notes and resources for the NLP/LLM journey. The goal is to learn gain a strong fundamental understanding of neural networks and NLP, and then dive deep into Large Language Models (LLM). The journey will be based on the Stanford CS224n, Karpathy's Zero to Hero, and other resources.
+
+**NOTE: this repo is messy and just a personal note.**
+
+
 ## Base Resources
 - [Stanford CS224 Website](https://web.stanford.edu/class/cs224n/)
 - [Stanford CS224n YouTube](https://www.youtube.com/playlist?list=PLoROMvodv4rMFqRtEuo6SGjY4XbRIVRd4)
@@ -42,14 +47,17 @@
 8. [ ] [Large Language Models - Advanced](Chapter8/llm_advanced.md)
 
 ### Chapter9: Post-training (Fine-tuning)
-9. [ ] [Post-training](Chapter9/posttraining.md)
-    - [ ] Model Alignment (RLHF llm)
-    - [ ] Fine Tuning
+9. [x] [Post-training](Chapter9/posttraining.md)
+    - [x] Model Alignment
+    - [x] Fine Tuning
 
 ### Final Project Ideas
-- Idea one: finetune BloombergGPT on Saudi Market, and use it to help in stock advice or to chat with the markt.
+- **Idea one**: finetune BloombergGPT on Saudi Market, and use it to help in stock advice or to chat with the markt.
 
-- **Idea two:** 
+- Idea Two - Transformer-Language Model Components
+
+
+- Idea Three: 
 > An Open Source Tool as a Foundation and Future SaaS Project
 The project aims to simplify the process of designing customized models for companies or individual projects.
 #### Features:
